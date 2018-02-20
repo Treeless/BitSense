@@ -6,6 +6,7 @@
   const InfluencerRetriever = require('./get_influencers.js');
   const InfluencerActions = require('./actions_influencers.js');
   const InfluencerScore = require('./score_influencers.js'); //Logic class for searching what effect the influencer may have on the price of the currency
+
   let mongoose = null; // = require('mongoose');'
   const Influencer = models.Influencer;
 
@@ -96,6 +97,9 @@
 
     if (RANK_INFLUENCERS) {
       console.log("Rank influencers process started");
+
+      console.log("Getting bitcoin historical price...")
+
       console.log("RANKING INFLUENCERS...")
     }
 
@@ -125,11 +129,13 @@
 
   });
 
-  logic();
-
 
   //Run other processes HERE
   //TODO bitcoin price realtime monitor HERE
+
   //
+
+
+  logic();
 
 }());

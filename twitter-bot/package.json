@@ -11,8 +11,10 @@
   "dependencies": {
     "async": "^2.6.0",
     "chalk": "^2.3.0",
+    "csv-parse": "^2.0.4",
     "moment": "^2.20.1",
     "mongoose": "^5.0.1",
+    "pusher-js": "^4.2.2",
     "twit": "^2.2.9"
   }
 }
