@@ -1,4 +1,5 @@
 # Cryptosense Twitter BOT
+<a href="https://twitter.com/Cryptosensebot">@cryptosensebot</a>
 
 Basically created a twitter bot that goes through this process:
 * [DONE] Searches twitter for influencers that post about bitcoin
@@ -11,5 +12,9 @@ Basically created a twitter bot that goes through this process:
 
 <img src="https://github.com/Treeless/BitSense/blob/master/twitter-bot/twitter-bot-flow.jpg?raw=true" alt="Cryptosensebot flow" width="600">
 
+## EMBEDDED CODE TO USE
+
+```html
 <a class="twitter-timeline" href="https://twitter.com/Cryptosensebot?ref_src=twsrc%5Etfw">Tweets by Cryptosensebot</a>
 <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+```
