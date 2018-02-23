@@ -1,20 +1,14 @@
-# BitSense
+# Cryptosense Twitter BOT
 
-## What does it do?
+Basically created a twitter bot that goes through this process:
+* [DONE] Searches twitter for influencers that post about bitcoin
+* [DONE] Stores those influencers
+* [DONE] Finds all the influencer's tweets from all time that are about bitcoin
+* [TODO] Checks how those tweets via sentiment and timeframe relate to the bitcoin price
+* [TODO] Ranks the influencers based on their tweets relation to the price (the more correct the sentiment to price increase, the better the score)
+* [TODO] The highest scoring influencers for the day, will have their relevant content retweeted.
 
-<p>pulls the tweets for a specific search value etc `bitcoin`. Does some analysis and displays information about the tweet set</p>
+![Cryptosensebot flow](https://github.com/Treeless/BitSense/blob/master/twitter-bot/twitter-bot-flow.jpg?raw=true "Cryptosense bot flow")
 
-## TODO
-
-* Put the analyzed tweet data into a object format and save to MongoDB
-* Do more analysis on the tweet data to pull out more meaningful data
-
-## What libraries you need to install to run the BitSense Script
-
-* `pip install rake-nltk`
-* `pip install matplotlib`
-* `pip install tweepy`
-* `pip install nltk`
-* `pip install textblob`
-* `pip install numpy`
-* Note: There may be more...
+---
+<a class="twitter-timeline" href="https://twitter.com/Cryptosensebot?ref_src=twsrc%5Etfw">Tweets by Cryptosensebot</a> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
