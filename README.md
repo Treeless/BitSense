@@ -10,5 +10,6 @@ Basically created a twitter bot that goes through this process:
 
 ![Cryptosensebot flow](https://github.com/Treeless/BitSense/blob/master/twitter-bot/twitter-bot-flow.jpg?raw=true "Cryptosense bot flow")
 
----
+```html
 <a class="twitter-timeline" href="https://twitter.com/Cryptosensebot?ref_src=twsrc%5Etfw">Tweets by Cryptosensebot</a> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+```
