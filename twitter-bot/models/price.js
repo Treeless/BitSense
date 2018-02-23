@@ -6,13 +6,12 @@
   const moment = require('moment');
 
   var priceSchema = new mongoose.Schema({
-    amount: { type: Number, required: true },
-    price: { type: Number, required: true },
-    coin: { type: String, default: 'btc' },
-    uniq_id: { type: String, index: { unique: true }, required: true },
-    timestamp: { type: String, required: true },
-    parsedDate: { type: Date },
-    exchange: {type: String , default: "bitstamp"}, //The exchange this data was gathered from
+    amount: { type: Number, required: true }, //The volume of the purchase
+    price: { type: Number, required: true }, //The USD price of the purchase (price of bitcoin)
+    timestamp: { type: String, required: true }, //UNIX timestamp on when the transaction occurred on the exchange
+    coin: { type: String, default: 'btc' }, //The coin we are using
+    parsedDate: { type: Date }, //The unix timestamp parsed to UTC date object
+    exchange: { type: String, default: "bitstamp" }, //The exchange this data was gathered from
   });
 
   priceSchema.pre('save', function(next) {
