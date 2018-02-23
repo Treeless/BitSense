@@ -5,6 +5,7 @@
       "database": "cryptosense",
       "port": 27017
     },
+    "pythonFilesPath": "THE PATH TO THE SMSA REPO ON YOUR MACHINE"
   },
   "production": {},
   "all": {

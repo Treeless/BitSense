@@ -35,6 +35,31 @@
       return found;
     };
 
+    //NOTE: I'm going to leave this here for now..
+    //      but the sentiment I was getting back for all my tweets was 'NEU'
+    //      So i'm not using the code in SMSA (mike and eliot's repo)
+    // SEE sentiment_analyzer.js for my nodejs version
+    this.sentiment = function(tweet) {
+      var text = tweet.text;
+      return new Promise(function(resolve, reject) {
+        var spawn = require("child_process").spawn;
+        var pythonProcess = spawn('python', [config.pythonFilesPath + "/interfaces/sentiment.py", text]);
+
+        pythonProcess.stdout.on('data', function(data) {
+          resolve(data.toString('utf-8'));
+        });
+
+        // Handle error output
+        pythonProcess.stderr.on('data', (data) => {
+          reject(data.toString());
+        });
+
+        pythonProcess.on('exit', (code) => {
+          //console.log("DONE");
+        });
+      });
+    }
+
 
   };
 }());

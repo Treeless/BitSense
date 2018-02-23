@@ -11,7 +11,7 @@
     timestamp: { type: String, required: true }, //UNIX timestamp on when the transaction occurred on the exchange
     coin: { type: String, default: 'btc' }, //The coin we are using
     parsedDate: { type: Date }, //The unix timestamp parsed to UTC date object
-    exchange: { type: String, default: "bitstamp" }, //The exchange this data was gathered from
+    fromRealtime: {type: Boolean, default: false} //if its realtime its not to be used for per day data
   });
 
   priceSchema.pre('save', function(next) {

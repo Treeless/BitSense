@@ -10,11 +10,8 @@
 
   const request = require('request');
   const Chalk = require('chalk');
-  const csv = require('fast-csv');
-  const fs = require('fs');
-  const glob = require('glob');
-  const zlib = require('zlib');
   const Pusher = new require('pusher-js');
+  const config = require('./config');
 
   const models = require('./models');
   const Price = models.Price;
@@ -27,77 +24,54 @@
     //private
 
     //Public
-    this.getHistoricalPrices = function() {
+
+    // Get the current prices and volumes of bitcoin.
+    this.getPricesNow = function() {
       return new Promise(function(resolve, reject) {
-        //First, check if we already filled the historical data
-        var exists = fs.existsSync(__dirname + "/data/filled.txt"); //note, filled will contain the date we last sync'd the data for
-        if (exists) {
-          //(NOTE: we may have some dead spots from when we were not listening to realtime.
-          //  TODO, get the CSV, add price data for timestamps after last entered price)
-          console.log("Already got the data... no need to get historical data again")
-          return resolve(0);
-        }
+        var spawn = require("child_process").spawn;
+        var pythonProcess = spawn('python', [config.pythonFilesPath + "/interfaces/prices.py", "now"]);
 
+        pythonProcess.stdout.on('data', function(data) {
+          // On output (our data)
+          data = JSON.parse(data.toString('utf-8'));
+          resolve(data);
+        });
 
-        var pricesObjects = [[], []];
-        var firstArr = true; //if we are inserting values at all
-        //CSV parse stream
-        var csvStream = csv()
-          .on("data", function(row) {
-            // (column 1) the trade's timestamp
-            // (column 2) the price
-            // (column 3) the volume of the trade
-            //if we are inserting, use the second array to add elements to, as we insert the first array
-            var arr = ((firstArr) ? pricesObjects[0] : pricesObjects[1]);
-            arr.push({ timestamp: row[0], price: parseInt(row[1]), amount: parseInt(row[2]) })
+        // Handle error output
+        pythonProcess.stderr.on('data', (data) => {
+          reject(data.toString());
+        });
 
-            //Every 500,000 objects, tell us how many we have
-            if(arr.length % 500000 == 0){
-              console.log("Processed", arr.length.toLocaleString(), "objects so far");
-            }
+        pythonProcess.on('exit', (code) => {
+          //console.log("DONE");
+        });
+      });
+    };
 
-            if(arr.length > 10000000){
-              firstArr = !firstArr;
-              Price.insertMany(((!firstArr) ? pricesObjects[0] : pricesObjects[1]), function(err, docs){
-                console.log(Chalk.green(docs.length.toString()+" INSERTED!"));
-                if(firstArr){
-                  pricesObjects[0] = []; //clear first arr
-                }else{
-                  pricesObjects[1] = []; //cclear second arr
-                }
-              });
-            }
-          })
-          .on("end", function() {
-            var arr = ((firstArr) ? pricesObjects[0] : pricesObjects[1]);
-            //Do bulk insert
-            console.log("Bulk inserting", arr.length, "records.")
-            Price.insertMany(arr, function(err, docs) {
-              if (err) {
-                //todo handle error
-                reject();
-              } else {
-                console.log("Done")
+    //Return the historical price data for the information
+    //Given the startDate (unix timestamp) and endDate (unix timestamp)
+    this.getHistoricalPrices = function(startDate, endDate) {
+      return new Promise(function(resolve, reject) {
+        var spawn = require("child_process").spawn;
+        var pythonProcess = spawn('python', [config.pythonFilesPath + "/interfaces/prices.py", "historical", startDate, endDate]);
 
-                fs.writeFileSync(__dirname+'data/filled.txt', Date.now().toString());
+        pythonProcess.stdout.on('data', function(data) {
+          // On output (our data)
+          data = JSON.parse(data.toString('utf-8'));
+          resolve(data);
+        });
 
-                resolve(docs.length);
-              }
-            });
-          });
+        pythonProcess.stderr.on('data', (data) => {
+          reject(data.toString());
+        });
 
-        //Get the bitstamp CSV
-        var stream = request({
-            uri: "http://api.bitcoincharts.com/v1/csv/bitstampUSD.csv.gz",
-            headers: {
-              'Accept-Encoding': 'gzip'
-            }
-          })
-          .pipe(zlib.createGunzip())
-          .pipe(csvStream);
+        pythonProcess.on('exit', (code) => {
+          //console.log("DONE");
+        });
       });
     }
 
+    //This is for listening to realtime trades, not used right now, but see independants/bbitcoin_realtime_listener.js for how we will use this
     //BITSTAMP REALTIME PRICES
     this.listenToRealtime = function() {
       let pusher = new Pusher(PUSHER_info.key);
@@ -123,7 +97,7 @@
             //id, unique identifier for that purchase from bitstamp
             //price, the price of bitcoin at the time of purchase (USD)
             //timestamp, the unix timetamp of the purchase
-            var newPrice = new Price({ amount: data.amount, price: data.price, timestamp: data.timestamp });
+            var newPrice = new Price({ fromRealtime: true, amount: data.amount, price: data.price, timestamp: data.timestamp });
             newPrice.save(); //save the new price (this is an async function)
 
             tradesInWindow++;

@@ -6,6 +6,7 @@
   const InfluencerRetriever = require('./get_influencers.js');
   const InfluencerActions = require('./actions_influencers.js');
   const InfluencerScore = require('./score_influencers.js'); //Logic class for searching what effect the influencer may have on the price of the currency
+  const BitcoinPriceRetriever = require('./bitcoin_price.js');
 
   let mongoose = null; // = require('mongoose');'
   const Influencer = models.Influencer;
@@ -14,10 +15,11 @@
   let influencerRetriever = new InfluencerRetriever(searchTerms);
   let influencerActions = new InfluencerActions(searchTerms);
   let influencerScore = new InfluencerScore();
+  let bitcoinPriceRetriever = new BitcoinPriceRetriever();
 
   //APP FUNCTION VARIABLES (for dev)
-  const FIND_INFLUENCERS = false; //Allow the process of going through twitter, finding influencers, getting their tweets etc
-  const RANK_INFLUENCERS = true; //Allow the ranking process of influencers
+  const FIND_INFLUENCERS = true; //Allow the process of going through twitter, finding influencers, getting their tweets etc
+  const RANK_INFLUENCERS = false; //Allow the ranking process of influencers
   //
 
   //RUN all the logic asyncronyously
@@ -91,14 +93,17 @@
 
     //FOR ALL INFLUENCERS we have in mongo. Compute their 'influencer score' using metrics outlined below
     // Step 1: see what influence (via time span 1-2 days after POST) they have on bitcoin price, based on sentiment of tweet as well.)
-    // Step 2: Influencer follower count
-    // Step 3: Maturity of account (how long its been around)
-    // Step 4: Bitcoin to non bitcoin tweet percentage [More chatter is bad?]
 
     if (RANK_INFLUENCERS) {
       console.log("Rank influencers process started");
 
-      console.log("Getting bitcoin historical price...")
+      console.log("Getting bitcoin price...")
+      var start = Math.round((new Date()).getTime() / 1000) - (86400*2); //yesterday
+      var end = Math.round((new Date()).getTime() / 1000);
+      var data = await bitcoinPriceRetriever.getHistoricalPrices(start, end);
+
+      console.log(data)
+
 
       console.log("RANKING INFLUENCERS...")
     }

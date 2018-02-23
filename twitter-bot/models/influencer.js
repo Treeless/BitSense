@@ -1,5 +1,8 @@
 (function() {
   // AN INFLUENCER IS SOMEONE ON SOCIAL MEDIA THAT INFLUENCES THE MARKET IN SOME FASHION
+  const async = require('async');
+  let sentimentAnalyzer = new(require("../sentiment_analyzer.js"))();
+
   var mongoose = require('mongoose');
   var ObjectId = mongoose.Schema.Types.ObjectId;
 
@@ -12,18 +15,43 @@
     followers: { type: Number }, //The total number of followers the influencer has
     foundOn: { type: Date, default: Date.now() }, //When the influencer was found
     tweets: [{
-      id: {type: String, required: true},
+      id: { type: String, required: true },
       text: { type: String, required: true },
-      dateRaw: {type: String, require: true},
-      dateUnix: {type: Number, required: true},
-      sentiment: { type: Number } //MIKE?
+      dateRaw: { type: String, require: true },
+      dateUnix: { type: Number, required: true },
+      sentiment: { type: String }
     }], //List of influence tweets (only the most influencial?)
-    tweetsAnalyzedCount: {type: Number, default: 0},
+    tweetsAnalyzedCount: { type: Number, default: 0 },
     influenceChecked: { type: Boolean, default: false }, //If we have gone through all this influencers content and checked how it has influenced the price
     influenceScore: { type: Number }, //How much influence we think this influencer's content has on the price?
     followed: { type: Boolean },
     sinceID: { type: String }, //see tweet_analysis.js
     maxID: { type: String } //see tweet_analysis.js
+  });
+
+  influencerSchema.pre('save', function(next) {
+    var self = this;
+
+    //GO THROUGH ALL THE TWEETS and ADD IN SENTIMENT
+    var tweetIndexesWithoutSentiment = [];
+    for (var i = 0; i < self.tweets.length; i++) {
+      if (!self.tweets[i].sentiment) {
+        tweetIndexesWithoutSentiment.push(i);
+      }
+    }
+
+    if (tweetIndexesWithoutSentiment.length > 0) {
+      for (var j = 0; j < tweetIndexesWithoutSentiment.length; j++) {
+        var text = self.tweets[tweetIndexesWithoutSentiment[j]].text;
+        var sentimentScore = sentimentAnalyzer.getSentiment(text)
+        var sentimentWord = sentimentAnalyzer.parseScore(sentimentScore);
+
+        self.tweets[tweetIndexesWithoutSentiment[j]].sentiment = sentimentWord;
+        next();
+      }
+    } else {
+      next();
+    }
   });
 
   module.exports.Influencer = mongoose.model('Influencer', influencerSchema);
