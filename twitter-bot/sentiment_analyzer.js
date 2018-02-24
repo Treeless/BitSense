@@ -12,6 +12,34 @@
       // The comparative score is simply: sum of each token / number of tokens
       //
       return sentiment(text);
+
+      /*
+      {
+        score: 1,
+        comparative: 0.1111111111111111,
+        tokens: [
+            'i',
+            'love',
+            'cats',
+            'but',
+            'i',
+            'am',
+            'allergic',
+            'to',
+            'them'
+        ],
+        words: [
+            'allergic',
+            'love'
+        ],
+        positive: [
+            'love'
+        ],
+        negative: [
+            'allergic'
+        ]
+    }
+    */
     }
 
     this.parseScore = function(score) {

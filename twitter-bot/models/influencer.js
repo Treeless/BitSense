@@ -19,7 +19,8 @@
       text: { type: String, required: true },
       dateRaw: { type: Date, require: true },
       dateUnix: { type: Number, required: true },
-      sentiment: { type: String, required: true}
+      sentiment: { type: String, required: true},
+      sentimentScore: { type: Number }
     }], //List of influence tweets (only the most influencial?)
     tweetsAnalyzedCount: { type: Number, default: 0 },
     influenceChecked: { type: Boolean, default: false }, //If we have gone through all this influencers content and checked how it has influenced the price

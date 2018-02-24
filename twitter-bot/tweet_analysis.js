@@ -20,7 +20,8 @@
         text: rawTweet.text,
         dateRaw: rawTweet.created_at,
         dateUnix: moment(rawTweet.created_at, "ddd MMM DD HH:mm:ss +ZZ YYYY", 'en').valueOf(),
-        sentiment: sentimentAnalyzer.getStringSentiment(rawTweet.text)
+        sentiment: sentimentAnalyzer.getStringSentiment(rawTweet.text),
+        sentimentScore: sentimentAnalyzer.getSentiment(rawTweet.text).score
       }
     };
 

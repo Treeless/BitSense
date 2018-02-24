@@ -20,9 +20,9 @@
   let stats = new Stats();
 
   //APP FUNCTION VARIABLES (for dev)
-  const FIND_INFLUENCERS = true; //Allow the process of going through twitter, finding influencers, getting their tweets etc
+  const FIND_INFLUENCERS = false; //Allow the process of going through twitter, finding influencers, getting their tweets etc
   const RANK_INFLUENCERS = false; //Allow the ranking process of influencers
-  const SHOW_STATS = false; //Show stats only
+  const SHOW_STATS = true; //Show stats only
   //
 
   //RUN all the logic asyncronyously
