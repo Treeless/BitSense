@@ -17,9 +17,9 @@
     tweets: [{
       id: { type: String, required: true },
       text: { type: String, required: true },
-      dateRaw: { type: String, require: true },
+      dateRaw: { type: Date, require: true },
       dateUnix: { type: Number, required: true },
-      sentiment: { type: String }
+      sentiment: { type: String, required: true}
     }], //List of influence tweets (only the most influencial?)
     tweetsAnalyzedCount: { type: Number, default: 0 },
     influenceChecked: { type: Boolean, default: false }, //If we have gone through all this influencers content and checked how it has influenced the price
@@ -27,31 +27,6 @@
     followed: { type: Boolean },
     sinceID: { type: String }, //see tweet_analysis.js
     maxID: { type: String } //see tweet_analysis.js
-  });
-
-  influencerSchema.pre('save', function(next) {
-    var self = this;
-
-    //GO THROUGH ALL THE TWEETS and ADD IN SENTIMENT
-    var tweetIndexesWithoutSentiment = [];
-    for (var i = 0; i < self.tweets.length; i++) {
-      if (!self.tweets[i].sentiment) {
-        tweetIndexesWithoutSentiment.push(i);
-      }
-    }
-
-    if (tweetIndexesWithoutSentiment.length > 0) {
-      for (var j = 0; j < tweetIndexesWithoutSentiment.length; j++) {
-        var text = self.tweets[tweetIndexesWithoutSentiment[j]].text;
-        var sentimentScore = sentimentAnalyzer.getSentiment(text)
-        var sentimentWord = sentimentAnalyzer.parseScore(sentimentScore);
-
-        self.tweets[tweetIndexesWithoutSentiment[j]].sentiment = sentimentWord;
-        next();
-      }
-    } else {
-      next();
-    }
   });
 
   module.exports.Influencer = mongoose.model('Influencer', influencerSchema);

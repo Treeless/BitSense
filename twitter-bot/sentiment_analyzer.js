@@ -17,11 +17,20 @@
     this.parseScore = function(score) {
       if (score == 0 || score == 1 || score == -1) {
         return 'neu'
-      } else if (score > 1) {
+      }
+      if (score > 1) {
         return 'pos'
-      } else if (score > -1) {
+      }
+      if (score < -1) {
         return 'neg'
       }
+
+      console.log("missed a condition?")
+      return 'neu'
+    }
+
+    this.getStringSentiment = function(text) {
+      return this.parseScore(this.getSentiment(text).score);
     }
   }
 }());

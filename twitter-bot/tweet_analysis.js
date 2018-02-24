@@ -9,6 +9,8 @@
   let models = require('./models');
   const Influencer = models.Influencer;
 
+  let sentimentAnalyzer = new (require('./sentiment_analyzer.js'))();
+
   //Class
   module.exports = function(searchTerms) {
     //Builds our custom tweet object with our specified fields
@@ -17,7 +19,8 @@
         id: rawTweet.id_str,
         text: rawTweet.text,
         dateRaw: rawTweet.created_at,
-        dateUnix: moment(rawTweet.created_at, "ddd MMM DD HH:mm:ss +ZZ YYYY", 'en').valueOf()
+        dateUnix: moment(rawTweet.created_at, "ddd MMM DD HH:mm:ss +ZZ YYYY", 'en').valueOf(),
+        sentiment: sentimentAnalyzer.getStringSentiment(rawTweet.text)
       }
     };
 

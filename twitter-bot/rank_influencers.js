@@ -18,13 +18,7 @@
         .find({ "tweets.0": { "$exists": true } })
         .sort('tweets', "-1")
         .exec(function(err, influencers) {
-
-          // Grab all the prices of bitcoin (sorted by date)
-          var
-
-          //For each tweet, get the sentiment (positive or negative?)
-
-          // Compare the tweets
+            //TODO for each influencer, check if their sentiment matches to the direction of the bitcoin price
         });
     }
   };

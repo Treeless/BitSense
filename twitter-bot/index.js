@@ -7,6 +7,7 @@
   const InfluencerActions = require('./actions_influencers.js');
   const InfluencerScore = require('./score_influencers.js'); //Logic class for searching what effect the influencer may have on the price of the currency
   const BitcoinPriceRetriever = require('./bitcoin_price.js');
+  const Stats = require('./stats.js')
 
   let mongoose = null; // = require('mongoose');'
   const Influencer = models.Influencer;
@@ -16,10 +17,12 @@
   let influencerActions = new InfluencerActions(searchTerms);
   let influencerScore = new InfluencerScore();
   let bitcoinPriceRetriever = new BitcoinPriceRetriever();
+  let stats = new Stats();
 
   //APP FUNCTION VARIABLES (for dev)
   const FIND_INFLUENCERS = true; //Allow the process of going through twitter, finding influencers, getting their tweets etc
   const RANK_INFLUENCERS = false; //Allow the ranking process of influencers
+  const SHOW_STATS = false; //Show stats only
   //
 
   //RUN all the logic asyncronyously
@@ -106,6 +109,10 @@
 
 
       console.log("RANKING INFLUENCERS...")
+    }
+
+    if(SHOW_STATS){
+      var done = await stats.overallTweetSentimentToday()
     }
 
 
