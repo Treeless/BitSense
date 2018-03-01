@@ -17,14 +17,19 @@
     tweets: [{
       id: { type: String, required: true },
       text: { type: String, required: true },
-      dateRaw: { type: Date, require: true },
+      dateRaw: { type: Date, require: true, index: true },
       dateUnix: { type: Number, required: true },
-      sentiment: { type: String, required: true},
+      sentiment: { type: String, required: true },
       sentimentScore: { type: Number }
     }], //List of influence tweets (only the most influencial?)
     tweetsAnalyzedCount: { type: Number, default: 0 },
-    influenceChecked: { type: Boolean, default: false }, //If we have gone through all this influencers content and checked how it has influenced the price
     influenceScore: { type: Number }, //How much influence we think this influencer's content has on the price?
+    influence: {
+      negativeInfluence: { type: Number }, // out of all their tweets, what percent is negative
+      positiveInfluence: { type: Number }, // out of all their tweets, what percent is positive
+      positiveInfluencingTweets: [{ type: ObjectId }], //points to tweet in tweets
+      negativeInfluencingTweets: [{ type: ObjectId }] // "
+    },
     followed: { type: Boolean },
     sinceID: { type: String }, //see tweet_analysis.js
     maxID: { type: String } //see tweet_analysis.js

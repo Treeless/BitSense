@@ -9,7 +9,7 @@
   let models = require('./models');
   const Influencer = models.Influencer;
 
-  let sentimentAnalyzer = new (require('./sentiment_analyzer.js'))();
+  let sentimentAnalyzer = new(require('./sentiment_analyzer.js'))();
 
   //Class
   module.exports = function(searchTerms) {
@@ -63,6 +63,43 @@
         });
       });
     }
+
+
+    //Returns the oldest tweet date we've gathered by an influencer
+    this.getOldestTweetWeHave = function() {
+
+
+      // THIS ISN"T RIGHT
+      return new Promise(function(resolve, reject) {
+        Influencer.aggregate([
+            { "$unwind": "$tweets" },
+            { "$sort": { "dateRaw": 1 } },
+            {
+              "$group": {
+                "_id":"$accountName",
+                "oldest": { $first: "$$ROOT" },
+                "youngest": { $last: "$$ROOT" }
+              }
+            }
+          ],
+          function(err, tweets) {
+            if(err){
+                console.log(err);
+            }  
+
+            var sorted = tweets.sort(function(a, b){
+                if(new Date(a.dateRaw).getTime() > new Date(b.dateRaw).getTime()){
+                  return 1;
+                }else{
+                  return -1;
+                }
+            });
+
+
+            console.log(sorted[0], sorted[sorted.length]);
+          });
+      });
+    };
 
 
   };

@@ -1,4 +1,5 @@
 (function() {
+  const moment = require('moment');
   const Chalk = require('chalk');
   const Async = require('async');
   const config = require('./config');
@@ -7,6 +8,7 @@
   const InfluencerActions = require('./actions_influencers.js');
   const InfluencerScore = require('./score_influencers.js'); //Logic class for searching what effect the influencer may have on the price of the currency
   const BitcoinPriceRetriever = require('./bitcoin_price.js');
+  const TweetAnalysis = require('./tweet_analysis.js');
   const Stats = require('./stats.js')
 
   let mongoose = null; // = require('mongoose');'
@@ -17,11 +19,12 @@
   let influencerActions = new InfluencerActions(searchTerms);
   let influencerScore = new InfluencerScore();
   let bitcoinPriceRetriever = new BitcoinPriceRetriever();
+  let tweetAnalysis = new TweetAnalysis();
   let stats = new Stats();
 
   //APP FUNCTION VARIABLES (for dev)
   const FIND_INFLUENCERS = false; //Allow the process of going through twitter, finding influencers, getting their tweets etc
-  const RANK_INFLUENCERS = false; //Allow the ranking process of influencers
+  const RANK_INFLUENCERS = true; //Allow the ranking process of influencers
   const SHOW_STATS = true; //Show stats only
   //
 
@@ -40,6 +43,7 @@
 
       //----------------------------------------------------------------------
       //Now get all of our influencers tweets
+      var totalNewRelatedTweets = 0;
       var influencersAnalyzed = await new Promise(function(resolve, reject) {
         console.log("Analyzing new influencers...")
         Influencer.find({}, function(err, influencers) {
@@ -64,6 +68,7 @@
                       callback(); //done
                     } else {
                       //Get more!
+                      totalNewRelatedTweets += info.searchTermsTweetsCount | 0;
                       console.log("total:", info.totalInfluencerRelatedTweets, "analyzed:", info.analyzedTweetsCount, "NEW:", (info.searchTermsTweetsCount) ? Chalk.green(info.searchTermsTweetsCount.toString() + "++") : '')
                       getTweets(callback);
                     }
@@ -89,7 +94,9 @@
           });
         });
       });
+      console.log("DONE");
       console.log("Influencers analyzed:", influencersAnalyzed);
+      console.log("New " + Chalk.blue(related) + " tweets found:", totalNewRelatedTweets)
       //----------------------------------------------------------------------
     } //End of FIND_INFLUENCERS functionality
 
@@ -99,19 +106,77 @@
 
     if (RANK_INFLUENCERS) {
       console.log("Rank influencers process started");
+      var bitcoinStart = new Date("01-01-2009").getTime() / 1000; //BITCOIN START DATE 2009
 
       console.log("Getting bitcoin price...")
-      var start = Math.round((new Date()).getTime() / 1000) - (86400*2); //yesterday
-      var end = Math.round((new Date()).getTime() / 1000);
-      var data = await bitcoinPriceRetriever.getHistoricalPrices(start, end);
+      var today = Math.round((new Date()).getTime() / 1000); //today
+      var priceData = await bitcoinPriceRetriever.getHistoricalPrices(bitcoinStart, today);
 
-      console.log(data)
+      //note: format of data: "YYYY-MM-DD : { crypto: 'BTC', timestamp: 1519794000, close: 10397.9,high: 11089.8,low: 10393.1,open: 10687.2,usd_market_cap: 180510000000, usd_volume: 6936190000}"
+      //Now which piece of price information do we look at? Open to close, low to high for the day
+
+      //Get all the influencers
+      Influencer.find({}, function(err, influencers) {
+        var tasks = [];
+
+        //for each influencer, go through and check get each of their tweets
+        for (var i = 0; i < influencers.length; i++) {
+          var influencer = influencers[i]
+          var influencerTally = { up: 0, down: 0, tweetUp: [], tweetDown: [] }
+          for (var j = 0; j < influencer.tweets.length; j++) {
+            var tweet = influencer.tweets[j];
+            //Get the price
+            var tweetDate = moment(tweet.dateRaw);
+            var priceKey = tweetDate.format("YYYY-MM-DD");
+            var dateSpread = { dayBefore: tweetDate.subtract(1, 'days').format("YYYY-MM-DD"), dayOf: tweetDate.format("YYYY-MM-DD"), dayAfter: tweetDate.add(1, 'days').format("YYYY-MM-DD") };
+            var price = priceData[priceKey];
+            var sentiment = tweet.sentiment; //neg. neu. pos.
+
+            //Analyze how the price has changed over the few days
+            var analysis = bitcoinPriceRetriever.priceAnalysis(dateSpread, priceData);
+
+            //Note: for now its just true or false. True if the price went up, false if the price went down. I'll make it better down the road
+            if (analysis == null) {
+              continue; //we are missing price data. so ignore the tweet
+            }
+            if (analysis == true && tweet.sentiment == "pos") {
+              //price went up that day and the tweet sentiment was positive
+              influencerTally.up += 1;
+              influencerTally.tweetUp.push(tweet._id);
+            } else if (analysis == false && tweet.sentiment == "neg") {
+              //Price went down and their tweet was negative
+              influencerTally.down += 1;
+              influencerTally.tweetDown.push(tweet._id);
+            }
+          }
+
+          if (influencer.tweets.length == 0 || (influencerTally.up == 0 && influencerTally.down == 0)) {
+            console.log("influencer", influencer.accountName, "has no tweets to analyze");
+            return;
+          }
+
+          //Set influencer score based on how many tweets they made
+          var totalTweets = influencer.tweets.length;
+          var negativeInfluencePercent = (influencerTally.down / totalTweets) * 100;
+          var positiveInfluencePercent = (influencerTally.up / totalTweets) * 100;
+
+          influencer.influence = {
+            negativeInfluence: negativeInfluencePercent,
+            positiveInfluence: positiveInfluencePercent,
+            positiveInfluencingTweets: influencerTally.tweetUp,
+            negativeInfluencingTweets: influencerTally.tweetDown
+          };
+
+          influencer.save();
+        }
+
+      })
 
 
       console.log("RANKING INFLUENCERS...")
     }
 
-    if(SHOW_STATS){
+    if (SHOW_STATS) {
       var done = await stats.overallTweetSentimentToday()
     }
 

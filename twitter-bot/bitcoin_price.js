@@ -112,5 +112,26 @@
         }, 15000);
       });
     }
+
+
+    this.priceAnalysis = function(dateSpread, priceData) {
+      var dayBefore = priceData[dateSpread.dayBefore]; //The prices on the day before
+      var dayOf = priceData[dateSpread.dayOf]; //The prices on the day the tweet was posted
+      var dayAfter = priceData[dateSpread.dayAfter]; //The prices on the day after the tweet
+
+      if(dayBefore == null || dayOf == null){
+        console.log("We are missing price data...");
+        return null;
+      }
+
+      //TODO: We need todo some crazier better price analysis [After beta that is...]
+      // eg price spread through day, volitility, volume change, etc
+
+      //For now, we are just turning true or false
+      //True if the price the day before, closed lower then the day of the tweet (meaning price went up)
+      return ((dayBefore.close < dayOf.low) ? true : false)
+
+
+    };
   }
 }());
