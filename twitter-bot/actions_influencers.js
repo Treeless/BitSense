@@ -79,7 +79,7 @@
     }
 
     //This influencer didn't make the cut. So lets ignore
-    this.unfollowInfluencer = function(influencer) {
+    this.unfollow = function(influencer) {
       return new Promise(function(resolve, reject) {
         console.log("TODO");
       });

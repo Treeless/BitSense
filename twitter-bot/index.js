@@ -14,7 +14,7 @@
   let mongoose = null; // = require('mongoose');'
   const Influencer = models.Influencer;
 
-  let searchTerms = ['#BTC', '$BTC', "#BITCOIN", "#Bitcoin", "#bitcoin", "@bitcoin", "bitcoin", "BTC", "#bitcoinnews"];
+  let searchTerms = ['#BTC', '$BTC', "#BITCOIN", "#Bitcoin", "#bitcoin", "@bitcoin", "bitcoin", "BTC", "#bitcoinnews"]; //Search terms
   let influencerRetriever = new InfluencerRetriever(searchTerms);
   let influencerActions = new InfluencerActions(searchTerms);
   let influencerScore = new InfluencerScore();
@@ -33,40 +33,70 @@
     //First connect to mongodb
     mongoose = await require('./mongo.connect.js');
 
+    //I've split the logic below into 3 different pieces.
+    // FIND_INFLUENCERS is the retrieval of influencers and their tweets
+    // RANK_INFLUENCERS is the analysis of the influencers's tweets and score
+    // SHOW_STATS is just a bunch of stats related to the data gathered in the first 2 pieces
+
+    //Find influencers from twitter based on search terms and get 
     if (FIND_INFLUENCERS) {
       //Get a list of influencers ranked by their level of engagement (initially we aren't going to store them, just do it on the fly...)
       var results = await influencerRetriever.search(); //Finds new influencers and saves them to MONGO
 
-      //Get all the people that the bot is following (INFLUENCERS we've checked in the past)
+      //Get all the people that the bot is following (INFLUENCERS we've checked in the past) [WE ONLY FOLLOW HIGHLY SCORED INFLUENCERS]
       var followerIdsList = await influencerActions.getFollowersList("cryptosensebot");
       console.log("People following cryptosensebot: ", followerIdsList.length);
 
       //----------------------------------------------------------------------
-      //Now get all of our influencers tweets
+      //Go and look for new influencers on twitter
       var totalNewRelatedTweets = 0;
+
+      //note: since all the calls for this run asyncronously we wrap it in a promise to stop the code after this from running
+      // see the `await`
       var influencersAnalyzed = await new Promise(function(resolve, reject) {
         console.log("Analyzing new influencers...")
+
+        //Get all our influencers we have in MONGODB
         Influencer.find({}, function(err, influencers) {
           var tasks = [];
 
+          //For each influencer we retrieved
           for (var i = 0; i < influencers.length; i++) {
             var obj = influencers[i];
+
+            //We need to go look for the influencer tweets but only one at a time. 
+            // Using the async library and the SERIES function. Which lets us run pockets of code for each influencer independently
+            //   and in a syncronyous fashion
+
+            //So here we are adding the code we are going to run for each influencer in the 'tasks' array and making sure each function being
+            //  added knows about the influencer its going to be analyzing
             tasks.push(function(influencer) {
               return function(cb) {
-                // Step 1: Check their tweets for the `searchTerms`
+                // Step 1: Check influencer tweets for the `searchTerms`
                 console.log("Getting ", ((influencer.tweetsAnalyzedCount > 0) ? Chalk.blue("RECENT") : Chalk.yellow("ALL")), "tweets for", influencer.accountName)
+
                 //Search all tweets made by the influencer for new tweets with once of the search terms. Save them
-                function getTweets(callback) {
+                // PLEASE NOTE: this is a recursive function, gets called multiple times per influencer to allow for all the tweets from all time to get 
+                //   retrieved
+                function GetTweets(callback) {
+
+                  //For the influencer we've found get all of their related tweets for the searchTerms (see up top for search terms)
                   influencerActions.getTweetsAndAnalyze(influencer).then(function(info) {
                     //info object: totalInfluencerRelatedTweets, analyzedTweetsCount, searchTermsTweetsCount
+
+                    //If no information/stats are returned by the function above as info, then that influencer no longer exists on twitter!
+                    // Account must have been deleted
                     if (info == null) {
                       //influencer must have been removed, continue
                       return callback();
                     }
+
+                    //If we ended up not getting any tweets analyzed for the last getTweetsAndAnalyzed call, it means we've analyzed ALL of their tweets
                     if (info.analyzedTweetsCount == 0) {
                       console.log("DONE getting tweets for:", influencer.accountName)
                       callback(); //done
                     } else {
+                      //We still have tweets to get, get more but output our stats for the last call getTweetsAndAnalyze
                       //Get more!
                       totalNewRelatedTweets += info.searchTermsTweetsCount | 0;
                       console.log("total:", info.totalInfluencerRelatedTweets, "analyzed:", info.analyzedTweetsCount, "NEW:", (info.searchTermsTweetsCount) ? Chalk.green(info.searchTermsTweetsCount.toString() + "++") : '')
@@ -78,17 +108,21 @@
                   })
                 }
 
-                getTweets(cb); //Start off the chain
+
+                //The first call that starts off the chain of calls
+                getTweets(cb);
 
               };
             }(obj))
           }
 
+          //Run all the functions in series for each influencer.
           Async.series(tasks, function(err, outputs) {
             if (err) {
               console.log(Chalk.red("THERE WAS AN ERROR :S"), ":", err);
               reject(err)
             } else {
+              //See influencersAnalyzed variable for the tallied stats 
               resolve(outputs.length);
             }
           });
@@ -208,7 +242,7 @@
 
 
   //Run other processes HERE
-  //TODO bitcoin price realtime monitor HERE
+  //TODO bitcoin price realtime price monitor
 
   //
 
